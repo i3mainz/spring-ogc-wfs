@@ -1,0 +1,40 @@
+buildscript {
+	repositories {
+		maven { url "http://repo.spring.io/plugins-snapshot" }
+		maven { url "http://repo.spring.io/release" }
+		jcenter()
+		maven { url "http://repo.spring.io/snapshot" }
+		maven { url "http://repo.spring.io/milestone" }
+	}
+	dependencies {
+  		classpath("org.springframework.xd:spring-xd-module-plugin:${springXDVersion}")
+	}
+}
+
+ext{
+	springXdVersion = '1.1.0.RELEASE'
+}
+
+apply plugin: 'base'
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'spring-xd-module'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+repositories {
+	maven { url "http://repo.spring.io/release" }
+	jcenter()
+	maven { url "http://repo.spring.io/snapshot" }
+	maven { url "http://repo.spring.io/milestone" }
+	mavenLocal()
+}
+
+dependencies {
+}
+
+task wrapper(type: Wrapper) {
+	description = 'Generates gradlew[.bat] scripts'
+	gradleVersion = '2.2.1'
+}

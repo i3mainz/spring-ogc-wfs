@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd 
+		http://www.springframework.org/schema/integration
+		http://www.springframework.org/schema/integration/spring-integration-4.1.xsd
+		http://www.springframework.org/schema/integration/http
+		http://www.springframework.org/schema/integration/http/spring-integration-http-4.1.xsd">
+
+	<int:channel id="http-trigger" />
+	<int:channel id="transform" />
+	<int:channel id="preOut" />
+	<int:channel id="output" />
+
+	<int:inbound-channel-adapter channel="http-trigger"
+		auto-startup="false" expression="'${payload}'">
+		<int:poller trigger="trigger"></int:poller>
+	</int:inbound-channel-adapter>
+
+	<int:chain id="geoserver-wfs" input-channel="http-trigger"
+		output-channel="transform">
+		<int-http:outbound-gateway
+			url-expression="@geoserverurlcreator.getURL()" http-method="GET"
+			expected-response-type='java.lang.String' charset='UTF-8'
+			reply-timeout='${replyTimeout:5000}'>
+			<int-http:uri-variable name="url" expression="'${serviceURL}'" />
+			<int-http:uri-variable name="request"
+				expression="'${serviceRequest}'" />
+			<int-http:uri-variable name="version"
+				expression="'${serviceVersion}'" />
+			<int-http:uri-variable name="typenames"
+				expression="'${typeNames}'" />
+			<int-http:uri-variable name="outputformat"
+				expression="'${serviceOutputFormat:#{null}}'" />
+			<int-http:uri-variable name="properties"
+				expression="'${propertyNames:#{null}}'" />
+			<int-http:uri-variable name="sortby"
+				expression="'${sortBy}'" />
+			<int-http:uri-variable name="filter"
+				expression="'${cqlfilter:#{null}}'" />
+			<int-http:uri-variable name="param" expression="'${addParam:#{null}'}" />
+		</int-http:outbound-gateway>
+	</int:chain>
+
+	<bean id="geoserverurlcreator"
+		class="de.i3mainz.actonair.springframework.xd.modules.wfs.GeoserverWFSURLCreator">
+		<property name="outputformat" value="'${serviceOutputFormat:#{null}}'" />
+		<property name="properties" value="'{propertyNames:#{null}}'" />
+		<property name="sortby" value="'{sortBy:#{null}}'" />
+		<property name="filter" value="'${cqlfilter:#{null}}'" />
+		<property name="param" value="${addParam:#{null}}" />
+	</bean>
+
+	<int:transformer input-channel="transform"
+		output-channel="preOut">
+		<bean
+			class="org.springframework.xd.tuple.integration.JsonToTupleTransformer" />
+	</int:transformer>
+
+	<beans profile="use-date">
+		<bean id="df" class="java.text.SimpleDateFormat">
+			<constructor-arg value="${dateFormat}" />
+		</bean>
+		<bean id="trigger" class="org.springframework.xd.module.support.DateTrigger">
+			<constructor-arg>
+				<bean factory-bean="df" factory-method="parse">
+					<constructor-arg value="${date}" />
+				</bean>
+			</constructor-arg>
+		</bean>
+	</beans>
+	<beans profile="use-cron">
+		<bean id="trigger" class="org.springframework.scheduling.support.CronTrigger">
+			<constructor-arg value="${cron}" />
+		</bean>
+	</beans>
+	<beans profile="use-delay">
+		<bean id="trigger" class="org.springframework.scheduling.support.PeriodicTrigger">
+			<constructor-arg value="${fixedDelay}" />
+			<constructor-arg value="${timeUnit}" />
+			<property name="initialDelay" value="${initialDelay} " />
+		</bean>
+	</beans>
+	<beans profile="use-splitter">
+
+		<int:channel id="filter" />
+
+		<int:splitter input-channel="preOut" expression="payload.features"
+			output-channel="filter" />
+
+		<beans profile="use-filter">
+			<int:filter input-channel="filter" output-channel="output"
+				expression="${filter}" />
+		</beans>
+
+		<beans profile="dont-use-filter">
+			<int:bridge input-channel="filter" output-channel="output" />
+		</beans>
+	</beans>
+
+	<beans profile="dont-use-splitter">
+		<int:bridge input-channel="preOut" output-channel="output" />
+	</beans>
+
+</beans>
