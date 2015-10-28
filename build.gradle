@@ -37,6 +37,8 @@ springxd{
     moduleType = "source"
 }
 
+mainClassName = ''
+
 task wrapper(type: Wrapper) {
 	description = 'Generates gradlew[.bat] scripts'
 	gradleVersion = '2.8'
