@@ -19,7 +19,7 @@ configure(javaProjects()) {
     apply from: "${rootProject.projectDir}/maven.gradle"
     
     sourceCompatibility = 1.8
-	targetCompatibility = 1.8
+    targetCompatibility = 1.8
 
     repositories {
         maven { url 'http://download.osgeo.org/webdav/geotools/' }
@@ -32,7 +32,7 @@ configure(javaProjects()) {
     }
 
     group = group
-	version = version
+    version = version
 
     jar { manifest.attributes provider: 'i3mainz' }
 }
