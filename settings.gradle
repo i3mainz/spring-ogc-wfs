@@ -4,6 +4,12 @@ include ":spring-integration-wfs"
 include ":spring-cloud-stream-starter-source-ogc-wfs"
 include ":spring-xd-wfs-source"
 
+include ":wfs-source-kafka"
+include ":wfs-source-rabbit"
+
 project(':spring-integration-wfs').projectDir = new File(settingsDir, 'integration')
-project(':spring-cloud-stream-starter-source-ogc-wfs').projectDir = new File(settingsDir, 'cloud/source')
+project(':spring-cloud-stream-starter-source-ogc-wfs').projectDir = new File(settingsDir, 'cloud/starter/source')
 project(':spring-xd-wfs-source').projectDir = new File(settingsDir, 'xd/source')
+
+project(':wfs-source-kafka').projectDir = new File(settingsDir, 'cloud/apps/kafka/source')
+project(':wfs-source-rabbit').projectDir = new File(settingsDir, 'cloud/apps/rabbit/source')
